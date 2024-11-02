@@ -28,6 +28,6 @@ module.exports = {
   },
   plugins: ["react"],
   rules: {
-    quotes: ["error", "single", { avoidEscape: true }],
+    quotes: ["error", { avoidEscape: true, allowTemplateLiterals: false }],
   },
 };

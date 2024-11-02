@@ -12,11 +12,15 @@ const createUser = asyncHandler(async (req, res) => {
 
   const usernameRegex = /^[a-zA-Z0-9_]+$/;
   if (!usernameRegex.test(username)) {
-    return res.status(400).json({ error: "Username must not contain special characters." });
+    return res
+      .status(400)
+      .json({ error: "Username must not contain special characters." });
   }
 
   if (password.length < 6) {
-    return res.status(400).json({ error: "Password must be at least 6 characters long." });
+    return res
+      .status(400)
+      .json({ error: "Password must be at least 6 characters long." });
   }
 
   try {
@@ -28,7 +32,6 @@ const createUser = asyncHandler(async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     const newUser = new User({ username, email, password: hashedPassword });
-
     await newUser.save();
     createToken(res, newUser._id);
 
@@ -43,8 +46,6 @@ const createUser = asyncHandler(async (req, res) => {
   }
 });
 
-
-
 const loginUser = asyncHandler(async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -55,11 +56,12 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const existingUser = await User.findOne({ email });
 
-
     if (existingUser) {
       console.log(123);
-      const isPasswordValid = await bcrypt.compare(password, existingUser.password);
-
+      const isPasswordValid = await bcrypt.compare(
+        password,
+        existingUser.password
+      );
 
       if (isPasswordValid) {
         // Create and send a token
@@ -85,7 +87,6 @@ const loginUser = asyncHandler(async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 
 const logoutCurrentUser = asyncHandler(async (req, res) => {
   res.cookie("jwt", "", {
