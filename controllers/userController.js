@@ -4,34 +4,43 @@ import bcrypt from "bcryptjs";
 import createToken from "../utils/createToken.js";
 
 const createUser = asyncHandler(async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, phone, dateOfBirth, email, password, confirmPassword } =
+    req.body;
 
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: "Please fill all the inputs." });
+  if (!username || !email || !password || !phone) {
+    return res.status(400).json({ error: "Hãy điền đầy đủ thông tin" });
   }
 
-  const usernameRegex = /^[a-zA-Z0-9_]+$/;
+  const usernameRegex = /^[a-zA-Z0-9_ ]+$/;
   if (!usernameRegex.test(username)) {
     return res
       .status(400)
-      .json({ error: "Username must not contain special characters." });
+      .json({ error: "Tên người dùng không được chứa ký tự đặc biệt" });
   }
 
   if (password.length < 6) {
-    return res
-      .status(400)
-      .json({ error: "Password must be at least 6 characters long." });
+    return res.status(400).json({ error: "Mật khẩu ít nhất phải 6 kí tự" });
+  }
+
+  if (password != confirmPassword) {
+    return res.status(400).json({ error: "Xác nhận mật khẩu không chính xác" });
   }
 
   try {
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ error: "User already exists" });
+      return res.status(400).json({ error: "Tài khoản đã tồn tại" });
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    const newUser = new User({ username, email, password: hashedPassword });
+    const newUser = new User({
+      username,
+      email,
+      phone,
+      dateOfBirth,
+      password: hashedPassword,
+    });
     await newUser.save();
     createToken(res, newUser._id);
 
@@ -39,6 +48,9 @@ const createUser = asyncHandler(async (req, res) => {
       _id: newUser._id,
       username: newUser.username,
       email: newUser.email,
+      phone: newUser.phone,
+      dateOfBirth: newUser,
+      dateOfBirth,
       isAdmin: newUser.isAdmin,
     });
   } catch (error) {
@@ -76,11 +88,11 @@ const loginUser = asyncHandler(async (req, res) => {
         });
       } else {
         // Password is not valid
-        res.status(401).json({ error: "Invalid password" });
+        res.status(401).json({ error: "Mật khẩu sai" });
       }
     } else {
       // User not found
-      res.status(401).json({ error: "User not found" });
+      res.status(401).json({ error: "Không tìm thấy tài khoản" });
     }
   } catch (error) {
     console.error("Error in loginUser:", error);
@@ -94,7 +106,7 @@ const logoutCurrentUser = asyncHandler(async (req, res) => {
     expires: new Date(0),
   });
 
-  res.status(200).json({ message: "Logged out successfully" });
+  res.status(200).json({ message: "Đăng xuất thành công" });
 });
 
 const getAllUsers = asyncHandler(async (req, res) => {
@@ -113,7 +125,7 @@ const getCurrentUserProfile = asyncHandler(async (req, res) => {
     });
   } else {
     res.status(404);
-    throw new Error("User not found.");
+    throw new Error("Không tồn tại tài khoản");
   }
 });
 
@@ -150,14 +162,14 @@ const deleteUserById = asyncHandler(async (req, res) => {
   if (user) {
     if (user.isAdmin) {
       res.status(400);
-      throw new Error("Cannot delete admin user");
+      throw new Error("Không có quyền xóa admin");
     }
 
     await User.deleteOne({ _id: user._id });
-    res.json({ message: "User removed" });
+    res.json({ message: "Tài khoản được xóa" });
   } else {
     res.status(404);
-    throw new Error("User not found.");
+    throw new Error("Không thấy người dùng");
   }
 });
 
