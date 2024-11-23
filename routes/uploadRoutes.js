@@ -11,7 +11,12 @@ const storage = multer.diskStorage({
 
   filename: (req, file, cb) => {
     const extname = path.extname(file.originalname);
-    cb(null, `${file.fieldname}-${Date.now()}${extname}`);
+    cb(
+      null,
+      `${file.fieldname}-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 10)}${extname}`
+    );
   },
 });
 

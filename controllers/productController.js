@@ -21,7 +21,11 @@ const addProduct = asyncHandler(async (req, res) => {
         return res.json({ error: "Quantity is required" });
     }
 
-    const product = new Product({ ...req.fields });
+    const imageArray = req.fields.image
+      .split(",")
+      .map((img) => img.trim().replace(/\\/g, "/"));
+
+    const product = new Product({ ...req.fields, image: [...imageArray] });
     await product.save();
     res.json(product);
   } catch (error) {
@@ -67,8 +71,16 @@ const updateProductDetails = asyncHandler(async (req, res) => {
 
 const removeProduct = asyncHandler(async (req, res) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
-    res.json(product);
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: "Invalid or empty list of IDs" });
+    }
+
+    const result = await Product.deleteMany({ _id: { $in: ids } });
+    res.json({
+      message: `${result.deletedCount} product(s) deleted successfully`,
+      deletedCount: result.deletedCount,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Server error" });
@@ -122,7 +134,6 @@ const fetchAllProducts = asyncHandler(async (req, res) => {
   try {
     const products = await Product.find({})
       .populate("category")
-      .limit(12)
       .sort({ createAt: -1 });
 
     res.json(products);
@@ -176,7 +187,9 @@ const addProductReview = asyncHandler(async (req, res) => {
 
 const fetchTopProducts = asyncHandler(async (req, res) => {
   try {
-    const products = await Product.find({}).sort({ rating: -1 }).limit(4);
+    const products = await Product.find({})
+      .sort({ rating: -1, quantitySold: -1 })
+      .limit(5);
     res.json(products);
   } catch (error) {
     console.error(error);
