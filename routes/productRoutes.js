@@ -39,6 +39,6 @@ router
 router.route("/delete").delete(removeProduct);
 
 router.route("/filtered-products").post(filterProducts);
-router.route("/brand/:brand").get(getProductsByBrand);
+router.post("/brand", getProductsByBrand);
 
 export default router;

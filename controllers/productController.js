@@ -20,12 +20,18 @@ const addProduct = asyncHandler(async (req, res) => {
       case !quantity:
         return res.json({ error: "Quantity is required" });
     }
-
     const imageArray = req.fields.image
       .split(",")
       .map((img) => img.trim().replace(/\\/g, "/"));
 
-    const product = new Product({ ...req.fields, image: [...imageArray] });
+    const product = new Product({
+      ...req.fields,
+      image: [...imageArray],
+      options: JSON.parse(req.fields?.options).map((option) => ({
+        name: option.name,
+        price: parseFloat(option.price),
+      })),
+    });
     await product.save();
     res.json(product);
   } catch (error) {
@@ -37,7 +43,6 @@ const addProduct = asyncHandler(async (req, res) => {
 const updateProductDetails = asyncHandler(async (req, res) => {
   try {
     const { name, description, price, category, quantity, brand } = req.fields;
-
     // Validation
     switch (true) {
       case !name:
@@ -225,11 +230,14 @@ const filterProducts = asyncHandler(async (req, res) => {
 
 const getProductsByBrand = asyncHandler(async (req, res) => {
   try {
-    const { brand } = req.params;
+    const { brand } = req.body;
+
+    if (!brand) {
+      return res.status(400).json({ message: "Brand is required" });
+    }
 
     const products = await Product.find({ brand });
-
-    if (!products || products.length === 0) {
+    if (!products.length) {
       return res
         .status(404)
         .json({ message: "No products found for this brand" });
@@ -237,8 +245,7 @@ const getProductsByBrand = asyncHandler(async (req, res) => {
 
     res.json(products);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server Error" });
+    res.status(500).json({ error: error.message });
   }
 });
 

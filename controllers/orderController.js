@@ -39,7 +39,6 @@ const createOrder = async (req, res) => {
     const itemsFromDB = await Product.find({
       _id: { $in: orderItems.map((x) => x._id) },
     });
-
     const dbOrderItems = orderItems.map((itemFromClient) => {
       const matchingItemFromDB = itemsFromDB.find(
         (itemFromDB) => itemFromDB._id.toString() === itemFromClient._id
@@ -49,7 +48,6 @@ const createOrder = async (req, res) => {
         res.status(404);
         throw new Error(`Product not found: ${itemFromClient._id}`);
       }
-
       return {
         ...itemFromClient,
         product: itemFromClient._id,
@@ -71,8 +69,8 @@ const createOrder = async (req, res) => {
       shippingPrice,
       totalPrice,
     });
-
     const createdOrder = await order.save();
+    console.log("createdOrder++", createdOrder);
     res.status(201).json(createdOrder);
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -31,6 +31,12 @@ const productSchema = mongoose.Schema(
     oldPrice: { type: Number, required: false, default: 0 },
     reducePrice: { type: Number, required: false, default: null },
     countInStock: { type: Number, required: true, default: 0 },
+    options: [
+      {
+        name: { type: String, required: false },
+        price: { type: Number, required: false },
+      },
+    ],
   },
   { timestamps: true }
 );

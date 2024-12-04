@@ -1,7 +1,7 @@
 import User from "../models/userModel.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import bcrypt from "bcryptjs";
-import createToken from "../utils/createToken.js";
+import generateToken from "../utils/createToken.js";
 
 const createUser = asyncHandler(async (req, res) => {
   const { username, phone, dateOfBirth, email, password, confirmPassword } =
@@ -41,9 +41,9 @@ const createUser = asyncHandler(async (req, res) => {
       dateOfBirth,
       password: hashedPassword,
     });
-    await newUser.save();
-    createToken(res, newUser._id);
 
+    await newUser.save();
+    generateToken(res, newUser._id);
     res.status(201).json({
       _id: newUser._id,
       username: newUser.username,
@@ -54,6 +54,7 @@ const createUser = asyncHandler(async (req, res) => {
       isAdmin: newUser.isAdmin,
     });
   } catch (error) {
+    console.log("error+++", error);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -63,13 +64,9 @@ const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
     // Logging for debugging
-    console.log(email);
-    console.log(password);
-
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-      console.log(123);
       const isPasswordValid = await bcrypt.compare(
         password,
         existingUser.password
@@ -77,7 +74,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
       if (isPasswordValid) {
         // Create and send a token
-        createToken(res, existingUser._id);
+        generateToken(res, existingUser._id);
 
         // Respond with user information
         res.status(200).json({
