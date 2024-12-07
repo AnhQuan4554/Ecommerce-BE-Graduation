@@ -29,21 +29,20 @@ function calcPrices(orderItems) {
 
 const createOrder = async (req, res) => {
   try {
-    const { orderItems, shippingAddress, paymentMethod } = req.body;
+    const { orderItems, shippingAddress, paymentMethod, userId } = req.body;
 
     if (orderItems && orderItems.length === 0) {
       res.status(400);
       throw new Error("No order items");
     }
-
     const itemsFromDB = await Product.find({
       _id: { $in: orderItems.map((x) => x._id) },
     });
+
     const dbOrderItems = orderItems.map((itemFromClient) => {
       const matchingItemFromDB = itemsFromDB.find(
         (itemFromDB) => itemFromDB._id.toString() === itemFromClient._id
       );
-
       if (!matchingItemFromDB) {
         res.status(404);
         throw new Error(`Product not found: ${itemFromClient._id}`);
@@ -61,7 +60,7 @@ const createOrder = async (req, res) => {
 
     const order = new Order({
       orderItems: dbOrderItems,
-      user: req.user._id,
+      user: userId,
       shippingAddress,
       paymentMethod,
       itemsPrice,
@@ -69,8 +68,9 @@ const createOrder = async (req, res) => {
       shippingPrice,
       totalPrice,
     });
+
     const createdOrder = await order.save();
-    console.log("createdOrder++", createdOrder);
+
     res.status(201).json(createdOrder);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -88,7 +88,8 @@ const getAllOrders = async (req, res) => {
 
 const getUserOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id });
+    const { userId } = req.query;
+    const orders = await Order.find({ user: userId });
     res.json(orders);
   } catch (error) {
     res.status(500).json({ error: error.message });
