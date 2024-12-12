@@ -24,9 +24,11 @@ router.post("/auth", loginUser);
 router.post("/logout", logoutCurrentUser);
 
 router
-  .route("/profile")
-  .get(authenticate, getCurrentUserProfile)
-  .put(authenticate, updateCurrentUserProfile);
+  .route("/profile/:id")
+  // .get(authenticate, getCurrentUserProfile)
+  .get(getCurrentUserProfile)
+  // .put(authenticate, updateCurrentUserProfile);
+  .put(updateCurrentUserProfile);
 
 // ADMIN ROUTES 👇
 router
