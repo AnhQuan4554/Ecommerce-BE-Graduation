@@ -72,9 +72,10 @@ const orderSchema = mongoose.Schema(
     },
 
     isDelivered: {
-      type: Boolean,
+      type: Number,
       required: true,
-      default: false,
+      default: 0,
+      enum: [0, 1, 2],
     },
 
     deliveredAt: {

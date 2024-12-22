@@ -96,6 +96,7 @@ const getUserOrders = async (req, res) => {
   }
 };
 
+// Total order
 const countTotalOrders = async (req, res) => {
   try {
     const totalOrders = await Order.countDocuments();
@@ -166,22 +167,20 @@ const findOrderById = async (req, res) => {
   }
 };
 
+// update status payment for order
 const markOrderAsPaid = async (req, res) => {
   try {
+    console.log("req.params.id", req.params.id);
     const order = await Order.findById(req.params.id);
-
     if (order) {
       order.isPaid = true;
       order.paidAt = Date.now();
-      order.paymentResult = {
-        id: req.body.id,
-        status: req.body.status,
-        update_time: req.body.update_time,
-        email_address: req.body.payer.email_address,
-      };
 
       const updateOrder = await order.save();
-      res.status(200).json(updateOrder);
+      res.status(200).json({
+        status: "success",
+        data: updateOrder,
+      });
     } else {
       res.status(404);
       throw new Error("Order not found");
@@ -191,12 +190,13 @@ const markOrderAsPaid = async (req, res) => {
   }
 };
 
+// update status delivery for order
 const markOrderAsDelivered = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-
+    const statusDelivery = req.body.statusDelivery;
     if (order) {
-      order.isDelivered = true;
+      order.isDelivered = statusDelivery;
       order.deliveredAt = Date.now();
 
       const updatedOrder = await order.save();
@@ -271,6 +271,21 @@ const calculateProductAddToCart = async (req, res) => {
   }
 };
 
+const deleteOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (order) {
+      await order.deleteOne();
+      res.json({ status: "success" });
+    } else {
+      res.status(404);
+      throw new Error("Order not found");
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export {
   createOrder,
   getAllOrders,
@@ -284,4 +299,5 @@ export {
   updateProductStockInOrder,
   calculateProductSales,
   calculateProductAddToCart,
+  deleteOrderById,
 };

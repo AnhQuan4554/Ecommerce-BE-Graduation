@@ -14,11 +14,12 @@ import {
   updateProductStockInOrder,
   calculateProductSales,
   calculateProductAddToCart,
+  deleteOrderById,
 } from "../controllers/orderController.js";
 
 import { authenticate, authorizeAdmin } from "../middlewares/authMiddleware.js";
 
-router.route("/").post(createOrder).get(authorizeAdmin, getAllOrders);
+router.route("/").post(createOrder).get(getAllOrders);
 
 router.route("/mine").get(getUserOrders);
 router.route("/total-orders").get(countTotalOrders);
@@ -28,7 +29,8 @@ router.route("/total-sales-by-product").get(calculateProductSales);
 router.route("/total-add-to-cart").get(calculateProductAddToCart);
 router.route("/:id").get(findOrderById);
 router.route("/:id/pay").put(markOrderAsPaid);
-router.route("/:id/deliver").put(authorizeAdmin, markOrderAsDelivered);
+router.route("/:id/deliver").put(markOrderAsDelivered);
 router.route("/update-stock").post(updateProductStockInOrder);
+router.route("/:id").delete(deleteOrderById);
 
 export default router;
