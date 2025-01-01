@@ -5,7 +5,7 @@ import Product from "../models/productModel.js";
 // Utility Function
 function calcPrices(orderItems) {
   const itemsPrice = orderItems.reduce(
-    (acc, item) => acc + item.price * item.qty,
+    (acc, item) => acc + item.price * item.quantity,
     0
   );
 
@@ -149,6 +149,53 @@ const calcualteTotalSalesByDate = async (req, res) => {
   }
 };
 
+const calculateSalesByMonthWithPaymentMethod = async (req, res) => {
+  try {
+    const salesByMonth = await Order.aggregate([
+      // {
+      //   $match: {
+      //     isPaid: true, // Chỉ tính các đơn hàng đã thanh toán
+      //   },
+      // },
+      {
+        $group: {
+          _id: {
+            month: { $dateToString: { format: "%Y-%m", date: "$updatedAt" } }, // sửa lại update at
+          },
+          totalSales: { $sum: "$totalPrice" }, // Tổng doanh thu
+          totalCash: {
+            // Tổng doanh thu thanh toán bằng Cash
+            $sum: {
+              $cond: [{ $eq: ["$paymentMethod", "Cash"] }, "$totalPrice", 0],
+            },
+          },
+          totalPaypal: {
+            // Tổng doanh thu thanh toán bằng Paypal
+            $sum: {
+              $cond: [{ $eq: ["$paymentMethod", "PayPal"] }, "$totalPrice", 0],
+            },
+          },
+        },
+      },
+      {
+        $sort: { "_id.month": 1 }, // Sắp xếp theo tháng tăng dần
+      },
+    ]);
+
+    // Định dạng dữ liệu trả về
+    const result = salesByMonth.map((data) => ({
+      month: data._id.month,
+      totalSales: data.totalSales,
+      totalCash: data.totalCash,
+      totalPaypal: data.totalPaypal,
+    }));
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const findOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).populate(
@@ -212,11 +259,11 @@ const markOrderAsDelivered = async (req, res) => {
 
 const updateProductStockInOrder = async (req, res) => {
   try {
-    const { productId, qty } = req.body;
+    const { productId, quantity } = req.body;
 
     const product = await Product.findById(productId);
 
-    product.countInStock -= qty;
+    product.countInStock -= quantity;
 
     await product.save();
 
@@ -235,9 +282,9 @@ const calculateProductSales = async (req, res) => {
       order.orderItems.forEach((item) => {
         const productName = item.name;
         if (productSales[productName]) {
-          productSales[productName] += item.qty;
+          productSales[productName] += item.quantity;
         } else {
-          productSales[productName] = item.qty;
+          productSales[productName] = item.quantity;
         }
       });
     });
@@ -300,4 +347,5 @@ export {
   calculateProductSales,
   calculateProductAddToCart,
   deleteOrderById,
+  calculateSalesByMonthWithPaymentMethod,
 };

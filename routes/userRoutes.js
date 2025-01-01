@@ -15,10 +15,7 @@ import { authenticate, authorizeAdmin } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router
-  .route("/")
-  .post(createUser)
-  .get(authenticate, authorizeAdmin, getAllUsers);
+router.route("/").post(createUser).get(getAllUsers);
 
 router.post("/auth", loginUser);
 router.post("/logout", logoutCurrentUser);
@@ -33,7 +30,7 @@ router
 // ADMIN ROUTES 👇
 router
   .route("/:id")
-  .delete(authenticate, authorizeAdmin, deleteUserById)
+  .delete(deleteUserById)
   .get(authenticate, authorizeAdmin, getUserById)
   .put(authenticate, authorizeAdmin, updateUserById);
 

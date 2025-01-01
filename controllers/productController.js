@@ -150,18 +150,18 @@ const fetchAllProducts = asyncHandler(async (req, res) => {
 
 const addProductReview = asyncHandler(async (req, res) => {
   try {
-    const { rating, comment } = req.body;
-    const product = await Product.findById(req.params.id);
+    const { rating, comment, id } = req.body;
+    const product = await Product.findById(id);
 
     if (product) {
-      const alreadyReviewed = product.reviews.find(
-        (r) => r.user.toString() === req.user._id.toString()
-      );
+      // const alreadyReviewed = product.reviews.find(
+      //   (r) => r.user.toString() === req.user._id.toString()
+      // );
 
-      if (alreadyReviewed) {
-        res.status(400);
-        throw new Error("Product already reviewed");
-      }
+      // if (alreadyReviewed) {
+      //   res.status(400);
+      //   throw new Error("Product already reviewed");
+      // }
 
       const review = {
         name: req.user.username,
@@ -192,9 +192,24 @@ const addProductReview = asyncHandler(async (req, res) => {
 
 const fetchTopProducts = asyncHandler(async (req, res) => {
   try {
-    const products = await Product.find({})
+    const { typeProduct, limitProduct } = req.query;
+    let query = {};
+    if (typeProduct) {
+      let brandArray = [];
+      // Nếu brand tồn tại, tạo điều kiện query với $in
+      // Đảm bảo brand là mảng
+      if (typeProduct == 0) {
+        // phone
+        brandArray = ["1", "2", "3", "4", "5", "6"];
+      } else if (typeProduct == 1) {
+        brandArray = ["7", "8", "9", "10", "11", "12", "13"];
+      }
+      query.brand = { $in: brandArray };
+    } else {
+    }
+    const products = await Product.find(query)
       .sort({ rating: -1, quantitySold: -1 })
-      .limit(5);
+      .limit(Number(limitProduct) || 5);
     res.json(products);
   } catch (error) {
     console.error(error);
