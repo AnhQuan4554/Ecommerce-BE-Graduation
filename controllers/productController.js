@@ -73,6 +73,29 @@ const updateProductDetails = asyncHandler(async (req, res) => {
     res.status(400).json(error.message);
   }
 });
+const updateStockAndSales = asyncHandler(async (req, res) => {
+  try {
+    const { countInStock, quantitySold } = req.body;
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        ...(countInStock !== undefined && { countInStock }),
+        ...(quantitySold !== undefined && { quantitySold }),
+      },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    res.json({ status: "success" });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: error.message });
+  }
+});
 
 const removeProduct = asyncHandler(async (req, res) => {
   try {
@@ -147,11 +170,53 @@ const fetchAllProducts = asyncHandler(async (req, res) => {
     res.status(500).json({ error: "Server Error" });
   }
 });
+const fetchFilteredProducts = asyncHandler(async (req, res) => {
+  try {
+    const { name, brand, category, priceStart, priceEnd, typeProduct } =
+      req.query;
+    let filter = {};
+
+    // Thêm điều kiện vào filter nếu query parameter được truyền
+    if (name) {
+      filter.name = { $regex: name, $options: "i" }; // Tìm kiếm không phân biệt hoa thường
+    }
+
+    if (brand && Number(brand) > 0) {
+      filter.brand = brand;
+    }
+
+    if (category && Number(category) > 0) {
+      filter.category = category; // Tìm chính xác category ID
+    }
+
+    if (priceStart && priceEnd && priceEnd > 0) {
+      filter.price = { $gte: Number(priceStart), $lte: Number(priceEnd) }; // Tìm trong khoảng giá
+    }
+
+    if (typeProduct && typeProduct > 0) {
+      if (typeProduct == 1) {
+        const brandArray = ["1", "2", "3", "4", "5", "6"];
+        filter.brand = { $in: brandArray }; // Đặt lại giá trị brand
+      } else if (typeProduct == 2) {
+        const brandArray = ["7", "8", "9", "10", "11", "12", "13"];
+        filter.brand = { $in: brandArray }; // Đặt lại giá trị brand
+      }
+    }
+
+    // Truy vấn dữ liệu với filter
+    const products = await Product.find(filter).sort({ createAt: -1 });
+    res.json(products);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
 
 const addProductReview = asyncHandler(async (req, res) => {
   try {
-    const { rating, comment, id } = req.body;
-    const product = await Product.findById(id);
+    const { rating, comment, productId, userName, userId } = req.body;
+    console.log("productId++", productId);
+    const product = await Product.findById(productId);
 
     if (product) {
       // const alreadyReviewed = product.reviews.find(
@@ -164,10 +229,10 @@ const addProductReview = asyncHandler(async (req, res) => {
       // }
 
       const review = {
-        name: req.user.username,
+        name: userName,
         rating: Number(rating),
         comment,
-        user: req.user._id,
+        user: userId,
       };
 
       product.reviews.push(review);
@@ -179,7 +244,7 @@ const addProductReview = asyncHandler(async (req, res) => {
         product.reviews.length;
 
       await product.save();
-      res.status(201).json({ message: "Review added" });
+      res.status(201).json({ message: "Review added", status: "success" });
     } else {
       res.status(404);
       throw new Error("Product not found");
@@ -276,4 +341,6 @@ export {
   fetchNewProducts,
   filterProducts,
   getProductsByBrand,
+  updateStockAndSales,
+  fetchFilteredProducts,
 };

@@ -240,14 +240,21 @@ const markOrderAsPaid = async (req, res) => {
 // update status delivery for order
 const markOrderAsDelivered = async (req, res) => {
   try {
+    // console.log("req.params.id", req.params);
     const order = await Order.findById(req.params.id);
-    const statusDelivery = req.body.statusDelivery;
+    // console.log("order__", order);
+    const { statusDelivery } = req.body;
     if (order) {
       order.isDelivered = statusDelivery;
       order.deliveredAt = Date.now();
-
+      if (statusDelivery == 1 || statusDelivery == 2) {
+        order.isPaid = true;
+        order.paidAt = Date.now();
+      }
+      console.log("00", order);
       const updatedOrder = await order.save();
-      res.json(updatedOrder);
+      console.log("11");
+      res.json({ status: "success" });
     } else {
       res.status(404);
       throw new Error("Order not found");
