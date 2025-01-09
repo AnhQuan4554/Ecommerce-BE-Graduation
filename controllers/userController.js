@@ -27,9 +27,18 @@ const createUser = asyncHandler(async (req, res) => {
   }
 
   try {
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({
+      $or: [{ email }, { phone }],
+    });
     if (userExists) {
-      return res.status(400).json({ error: "Tài khoản đã tồn tại" });
+      const errorMessage =
+        userExists.email === email && userExists.phone === phone
+          ? "email và số điện thoại đã tồn tại"
+          : userExists.email === email
+          ? "email đã tồn tại"
+          : "số điện thoại đã tồn tại";
+
+      return res.status(400).json({ error: errorMessage });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -128,7 +137,6 @@ const getAllUsers = asyncHandler(async (req, res) => {
 //   }
 // });
 
-
 const getCurrentUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id).select("-password");
 
@@ -174,7 +182,7 @@ const updateCurrentUserProfile = asyncHandler(async (req, res) => {
     user.username = req.body.username || user.username;
     user.email = req.body.email || user.email;
     user.phone = req.body.phone || user.phone;
-    user.dateOfBirth = req.body.dateOfBirth || user.dateOfBirth
+    user.dateOfBirth = req.body.dateOfBirth || user.dateOfBirth;
 
     const updatedUser = await user.save();
 
