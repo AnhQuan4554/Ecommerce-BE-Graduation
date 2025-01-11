@@ -8,17 +8,17 @@ const addProduct = asyncHandler(async (req, res) => {
     // Validation
     switch (true) {
       case !name:
-        return res.json({ error: "Name is required" });
+        return res.json({ error: "Bạn cần điền tên sản phẩm" });
       case !brand:
-        return res.json({ error: "Brand is required" });
+        return res.json({ error: "Bạn cần chọn hãng sản phẩm" });
       case !description:
-        return res.json({ error: "Description is required" });
+        return res.json({ error: "Bạn cần điền mô tả sản phẩm" });
       case !price:
-        return res.json({ error: "Price is required" });
+        return res.json({ error: "Bạn cần điền giá cho sản phẩm" });
       case !category:
-        return res.json({ error: "Category is required" });
+        return res.json({ error: "Bạn cần chọn loại sản phẩm" });
       case !quantity:
-        return res.json({ error: "Quantity is required" });
+        return res.json({ error: "Bạn cần điền số lượng" });
     }
     const imageArray = req.fields.image
       .split(",")
@@ -176,21 +176,20 @@ const fetchFilteredProducts = asyncHandler(async (req, res) => {
       req.query;
     let filter = {};
 
-    // Thêm điều kiện vào filter nếu query parameter được truyền
     if (name) {
-      filter.name = { $regex: name, $options: "i" }; // Tìm kiếm không phân biệt hoa thường
+      filter.name = { $regex: name, $options: "i" };
     }
 
     if (brand && Number(brand) > 0) {
       filter.brand = brand;
     }
 
-    if (category && Number(category) > 0) {
-      filter.category = category; // Tìm chính xác category ID
+    if (category) {
+      filter.category = category;
     }
 
     if (priceStart && priceEnd && priceEnd > 0) {
-      filter.price = { $gte: Number(priceStart), $lte: Number(priceEnd) }; // Tìm trong khoảng giá
+      filter.price = { $gte: Number(priceStart), $lte: Number(priceEnd) };
     }
 
     if (typeProduct && typeProduct > 0) {
@@ -203,7 +202,6 @@ const fetchFilteredProducts = asyncHandler(async (req, res) => {
       }
     }
 
-    // Truy vấn dữ liệu với filter
     const products = await Product.find(filter).sort({ createAt: -1 });
     res.json(products);
   } catch (error) {
@@ -215,7 +213,6 @@ const fetchFilteredProducts = asyncHandler(async (req, res) => {
 const addProductReview = asyncHandler(async (req, res) => {
   try {
     const { rating, comment, productId, userName, userId } = req.body;
-    console.log("productId++", productId);
     const product = await Product.findById(productId);
 
     if (product) {
@@ -240,8 +237,11 @@ const addProductReview = asyncHandler(async (req, res) => {
       product.numReviews = product.reviews.length;
 
       product.rating =
-        product.reviews.reduce((acc, item) => item.rating + acc, 0) /
-        product.reviews.length;
+        Math.round(
+          (product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+            product.reviews.length) *
+            2
+        ) / 2;
 
       await product.save();
       res.status(201).json({ message: "Review added", status: "success" });

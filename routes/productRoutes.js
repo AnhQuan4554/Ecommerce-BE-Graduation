@@ -43,7 +43,7 @@ router
 router.route("/:id/is-buy").put(updateStockAndSales);
 router.route("/delete").delete(removeProduct);
 
-router.route("/filtered-products").post(filterProducts);
+// router.route("/filtered-products").post(filterProducts);
 router.post("/brand", getProductsByBrand);
 
 export default router;
