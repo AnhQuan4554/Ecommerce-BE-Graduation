@@ -209,10 +209,27 @@ const deleteUserById = asyncHandler(async (req, res) => {
     }
 
     await User.deleteOne({ _id: user._id });
-    res.json({ message: "Tài khoản được xóa" });
+    res.json({ status: "success" });
   } else {
     res.status(404);
     throw new Error("Không thấy người dùng");
+  }
+});
+const updateUserToAdmin = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+
+  if (user) {
+    // Cập nhật quyền admin
+    user.isAdmin = true;
+
+    // Lưu lại người dùng sau khi cập nhật
+    const updatedUser = await user.save();
+
+    // Trả về dữ liệu người dùng đã cập nhật
+    res.json({ status: "success" });
+  } else {
+    res.status(404);
+    throw new Error("User not found");
   }
 });
 
@@ -259,4 +276,5 @@ export {
   deleteUserById,
   getUserById,
   updateUserById,
+  updateUserToAdmin,
 };

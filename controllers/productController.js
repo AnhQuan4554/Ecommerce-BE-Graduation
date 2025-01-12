@@ -46,17 +46,17 @@ const updateProductDetails = asyncHandler(async (req, res) => {
     // Validation
     switch (true) {
       case !name:
-        return res.json({ error: "Name is required" });
+        return res.json({ error: "Bạn cần điền tên sản phẩm" });
       case !brand:
-        return res.json({ error: "Brand is required" });
+        return res.json({ error: "Bạn cần chọn hãng sản phẩm" });
       case !description:
-        return res.json({ error: "Description is required" });
+        return res.json({ error: "Bạn cần điền mô tả sản phẩm" });
       case !price:
-        return res.json({ error: "Price is required" });
+        return res.json({ error: "Bạn cần điền giá cho sản phẩm" });
       case !category:
-        return res.json({ error: "Category is required" });
+        return res.json({ error: "Bạn cần chọn loại sản phẩm" });
       case !quantity:
-        return res.json({ error: "Quantity is required" });
+        return res.json({ error: "Bạn cần điền số lượng" });
     }
 
     const product = await Product.findByIdAndUpdate(
@@ -236,12 +236,10 @@ const addProductReview = asyncHandler(async (req, res) => {
 
       product.numReviews = product.reviews.length;
 
-      product.rating =
-        Math.round(
-          (product.reviews.reduce((acc, item) => item.rating + acc, 0) /
-            product.reviews.length) *
-            2
-        ) / 2;
+      product.rating = Math.round(
+        product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+          product.reviews.length
+      );
 
       await product.save();
       res.status(201).json({ message: "Review added", status: "success" });
